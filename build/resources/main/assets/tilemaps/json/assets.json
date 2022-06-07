@@ -1,6 +1,0 @@
-{
-  "name": "tiles",
-  "listName": ["ground", "wall", "gate", "bed", "door_up", "door_down", "room", "elevator","bottom_right_corner", "bottom_left_corner", "top_right_corner", "top_left_corner", "horizontal_path", "vertical_path", "up_fork_path", "down_fork_path", "right_fork_path", "left_fork_path", "cross_path", "up_dir", "down_dir", "left_dir", "right_dir"],
-  "URL": "tilemaps/tiles/",
-  "extension": ".png"
-}
