@@ -48,14 +48,14 @@ public class Constant {
     public static double minDistance(Actor actor, Set<Actor> otherActors) {
         double dist = Double.POSITIVE_INFINITY;
         for(Actor element: otherActors) {
-            double smaller = Math.sqrt((element.x - actor.x) * (element.x - actor. x)
-                    + (element.y - actor.y) * (element.y - actor.y));
+            double dx = element.getTranslateX() - actor.getTranslateX();
+            double dy = element.getTranslateY() - actor.getTranslateY();
+            double smaller = Math.sqrt(dx * dx + dy * dy);
             if(dist > smaller) {
                 dist=smaller;
             }
         }
         return dist;
-
     }
 
     public static int numberOfEdges(int width, int height, Node2D[][] nodes) {
