@@ -1,7 +1,6 @@
 package game.entities;
 
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.scene.CacheHint;
 import javafx.scene.image.ImageView;
 import scenes.MainScene;
 
@@ -37,30 +36,24 @@ public class Sprite extends ImageView implements GameObject {
 
     public void setX_(double value) {
         this.setTranslateX(value);
-        this.x = (int) (this.getTranslateX() / 32);
     }
 
     public void setY_(double value) {
         this.setTranslateY(value);
-        this.y = (int) (this.getTranslateY() / 32);
     }
 
     @Override
     public void moveX() {
         this.setTranslateX(this.getTranslateX() + velocityX.get());
-        this.x = (int) (this.getTranslateX() / 32);
     }
 
     @Override
     public void moveY() {
         this.setTranslateY(this.getTranslateY() + velocityY.get());
-        this.y = (int) (this.getTranslateY() / 32);
-
     }
 
     @Override
     public void destroy() {
         this.scene.displayList.destroy(this);
     }
-
 }
