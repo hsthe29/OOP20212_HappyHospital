@@ -21,8 +21,8 @@ javafx {
 }
 
 application {
-    mainModule.set("app")
-    mainClass.set("app.Main")
+    mainModule.set("init")
+    mainClass.set("Main")
 }
 
 dependencies {
