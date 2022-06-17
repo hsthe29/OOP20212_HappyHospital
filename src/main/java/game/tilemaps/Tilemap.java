@@ -1,9 +1,9 @@
 package game.tilemaps;
 
 import game.constant.ModeOfDirection;
-import game.utilities.load.LayerItem;
-import game.utilities.load.LayerLoader;
-import game.utilities.load.LoaderPlugin;
+import game.utilities.loadcomponent.LayerItem;
+import game.utilities.loadcomponent.LayerLoader;
+import game.utilities.loadcomponent.LoaderPlugin;
 import scenes.MainScene;
 
 import java.util.ArrayList;

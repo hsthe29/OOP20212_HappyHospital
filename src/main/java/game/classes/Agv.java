@@ -34,6 +34,20 @@ public class Agv extends Actor{
 
         this.estimateArrivalTime(x * 32, y * 32,  desX * 32, desY * 32);
 
+        this.text = new Text(
+                this.scene,
+                this.x,
+                this.y,
+                0, -35,
+                "AGV",
+                "-fx-font-family: \"Courier New\";" +
+                        "-fx-font-weight: 900;" +
+                        " -fx-fill: green;" +
+                        " -fx-stroke: black;" +
+                        " -fx-stroke-width: 1.5;" +
+                        " -fx-font-size: 18px"
+        );
+
         this.desText = new Text(
                 this.scene, //
                 this.desX,
@@ -85,6 +99,8 @@ public class Agv extends Actor{
 
     public void update() {
         this.setVelocity(0);
+        this.text.setX_(this.getTranslateX());
+        this.text.setY_(this.getTranslateY());
         if(isDisable) return;
 
         boolean t = true, b = true, l = true, r = true;
@@ -93,26 +109,26 @@ public class Agv extends Actor{
         for (Tile tile: tiles) {
             if(tile.getDirection() == ModeOfDirection.TOP) {
                 b = false;
-                if(this.scene.controller.keyS.get())
+                if(this.scene.controller.keyS)
                     ToastInvalidMove();
             } else if (tile.getDirection() == ModeOfDirection.BOTTOM) {
                 t = false;
-                if(this.scene.controller.keyW.get())
+                if(this.scene.controller.keyW)
                     ToastInvalidMove();
             } else if (tile.getDirection() == ModeOfDirection.LEFT) {
                 r = false;
-                if(this.scene.controller.keyD.get())
+                if(this.scene.controller.keyD)
                     ToastInvalidMove();
             } else if (tile.getDirection() == ModeOfDirection.RIGHT) {
                 l = false;
-                if(this.scene.controller.keyA.get())
+                if(this.scene.controller.keyA)
                     ToastInvalidMove();
             }
         }
 
         int _x = (int) ((this.getTranslateX() + 16) / 32);
         int _y = (int) ((this.getTranslateY() + 16) / 32);
-        if(this.scene.controller.keyW.get()) {
+        if(this.scene.controller.keyW) {
             if(t) {
                 if(this.scene.physics.collision(_x, _y, 'W')) {
                     this.setTranslateY((int) ((this.getTranslateY() + 16) / 32) * 32);
@@ -120,7 +136,7 @@ public class Agv extends Actor{
                 else this.velocityY.set(-Constant.vec);
             }
         }
-        if(this.scene.controller.keyS.get()) {
+        if(this.scene.controller.keyS) {
             if(b) {
                 if(this.scene.physics.collision(_x, _y, 'S')) {
                     this.setTranslateY((int) ((this.getTranslateY() + 16) / 32) * 32);
@@ -129,7 +145,7 @@ public class Agv extends Actor{
             }
         }
         moveY();
-        if(this.scene.controller.keyA.get()) {
+        if(this.scene.controller.keyA) {
             if(l) {
                 if(this.scene.physics.collision(_x, _y, 'A')) {
                     this.setTranslateX((int) ((this.getTranslateX() + 16) / 32) * 32);
@@ -138,7 +154,7 @@ public class Agv extends Actor{
                     this.velocityX.set(-Constant.vec);
             }
         }
-        if(this.scene.controller.keyD.get()) {
+        if(this.scene.controller.keyD) {
             if(r ) {
                 if(this.scene.physics.collision(_x, _y, 'D')) {
                     this.setTranslateX((int) ((this.getTranslateX() + 16) / 32) * 32);

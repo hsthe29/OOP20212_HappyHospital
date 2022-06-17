@@ -1,12 +1,13 @@
 package init;
 
 import javafx.application.Application;
+import javafx.scene.CacheHint;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import scenes.GameScene;
 import scenes.MainScene;
-
 import java.io.IOException;
 
 public class GameUI extends Application {
@@ -16,7 +17,7 @@ public class GameUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        GameScene scene = this.loadScene();
+        MainScene scene = this.loadScene();
         primaryStage.setScene(scene);
 
         primaryStage.setTitle("Happy Hospital");
@@ -30,6 +31,8 @@ public class GameUI extends Application {
 
     private MainScene loadScene() throws IOException {
         GridPane gridPane = new GridPane();
+        gridPane.setCache(true);
+        gridPane.setCacheHint(CacheHint.SPEED);
         ScrollPane scrollPane = new ScrollPane(gridPane);
         StackPane stackPane = new StackPane(scrollPane);
         Pane pane = new Pane();

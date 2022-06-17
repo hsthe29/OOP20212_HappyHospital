@@ -18,11 +18,11 @@ public class Actor extends Sprite {
 
     public Actor(
             MainScene scene,
-            int x,
-            int y,
+            double x,
+            double y,
             String type
     ) {
-        super(scene, x, y, type);
+        super(scene, x, y, type); // true x, y
 
         scene.displayList.add(this);
 

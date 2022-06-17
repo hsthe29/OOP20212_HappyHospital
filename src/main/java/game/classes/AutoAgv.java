@@ -29,14 +29,13 @@ public class AutoAgv extends Actor {
                    int endX,
                    int endY,
                    Graph graph) {
-        super(scene, x, y, "agv");
+        super(scene, x * 32, y * 32, "agv");
         this.startX = x * 32;
         this.startY = y * 32;
         this.endX = endX * 32;
         this.endY = endY * 32;
 
         this.graph = graph;
-
         this.cur = 0;
         this.waitT = 0;
         this.curNode = this.graph.nodes[x][y];

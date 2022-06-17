@@ -4,34 +4,23 @@ import game.entities.GameObject;
 import scenes.MainScene;
 
 public class Text extends javafx.scene.text.Text implements GameObject {
-    public int i;
-    public int j;
-    private double x;
-    private double y;
-    private double xIntercept;
-    private double yIntercept;
+    public double x;
+    public double y;
+    public double xIntercept;
+    public double yIntercept;
     public MainScene scene;
 
-    public Text(MainScene scene, int i, int j, double xIntecept, double yIntecept, String text, String style) {
+    public Text(MainScene scene, double x, double y, double xIntecept, double yIntecept, String text, String style) {
         super(text);
         this.setStyle(style);
         this.scene = scene;
-        this.i = i;
-        this.j = j;
-        this.x = 32 * i + xIntecept;
-        this.y = 32 * j + yIntecept;
+        this.x = x;
+        this.y = y;
         this.xIntercept = xIntecept;
         this.yIntercept = yIntecept;
         scene.displayList.add(this);
     }
 
-    public void set_X(double value) {
-        this.x = value + this.xIntercept;
-    }
-
-    public void set_Y(double value) {
-        this.y = value + this.yIntercept;
-    }
 
     @Override
     public void setVelocity(double vecX, double vecY) {
@@ -46,6 +35,16 @@ public class Text extends javafx.scene.text.Text implements GameObject {
     @Override
     public void moveY() {
         this.setTranslateY(this.y);
+    }
+
+    @Override
+    public void setX_(double value) {
+        this.setTranslateX(value + this.xIntercept);
+    }
+
+    @Override
+    public void setY_(double value) {
+        this.setTranslateY(value + this.yIntercept);
     }
 
     @Override

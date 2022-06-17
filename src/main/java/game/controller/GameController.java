@@ -1,29 +1,22 @@
 package game.controller;
 
-import game.classes.AutoAgv;
 import game.constant.Constant;
 import javafx.animation.Animation;
-import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.NamedArg;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.util.Duration;
 import scenes.MainScene;
 
 public class GameController {
-    public MainScene scene;
 
+    public MainScene scene;
     // move controller
-    public SimpleBooleanProperty keyW = new SimpleBooleanProperty(false);
-    public SimpleBooleanProperty keyA = new SimpleBooleanProperty(false);
-    public SimpleBooleanProperty keyS = new SimpleBooleanProperty(false);
-    public SimpleBooleanProperty keyD = new SimpleBooleanProperty(false);
+    public boolean keyW = false;
+    public boolean keyA = false;
+    public boolean keyS = false;
+    public boolean keyD = false;
 
     public SimpleStringProperty harmfulness = new SimpleStringProperty("H.ness: 0");
     public SimpleStringProperty timeDisplay = new SimpleStringProperty("00:00:00");
@@ -82,8 +75,6 @@ public class GameController {
     public static double now() {
         return System.currentTimeMillis() - _start;
     }
-
-
 
     public void setAgentTime(@NamedArg("ms") int time) {
         this.agentTime = time;

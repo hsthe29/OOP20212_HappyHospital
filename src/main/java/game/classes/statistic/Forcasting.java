@@ -2,6 +2,7 @@ package game.classes.statistic;
 
 import game.classes.Text;
 import game.constant.Constant;
+import game.controller.GameController;
 
 import java.util.*;
 
@@ -9,16 +10,16 @@ public class Forcasting {
     private Map<Integer, HashSet<WaitingDuration>> waitingAutoAgv;
     private Set<Integer> doneAutoAgv;
     private int doNothing = 0;
-    public int averageAverageWaitingTime = 0;
+    public double averageAverageWaitingTime = 0;
 
     public Forcasting() {
-        this.waitingAutoAgv = new HashMap<Integer, HashSet<WaitingDuration>>();
-        this.doneAutoAgv = new HashSet<Integer>();
+        this.waitingAutoAgv = new HashMap<>();
+        this.doneAutoAgv = new HashSet<>();
     }
 
     public void rememberDoneAutoAgv(Integer id) {
         if (this.doneAutoAgv == null) {
-            this.doneAutoAgv = new HashSet<Integer>();
+            this.doneAutoAgv = new HashSet<>();
         }
         this.doneAutoAgv.add(id);
     }
@@ -41,7 +42,7 @@ public class Forcasting {
         }
 
         if (this.waitingAutoAgv.containsKey(id)) {
-            int now = (int) Math.floor(/*performance.now() / 1000*/ 7);
+            int now = (int) Math.floor(GameController.now() / 1000);
             ArrayList<WaitingDuration> arr = new ArrayList<>();
             this.waitingAutoAgv.get(id).forEach((item) -> {
                 if (item.end != -1 && item.end < now - Constant.DELTA_T) {
@@ -90,16 +91,16 @@ public class Forcasting {
         }
     }
 
-    public int totalAverageWaitingTime() {
-        int result = 0;
+    public double totalAverageWaitingTime() {
+        double result = 0;
         if (this.waitingAutoAgv == null) {
-            this.waitingAutoAgv = new HashMap<Integer, HashSet<WaitingDuration>>();
+            this.waitingAutoAgv = new HashMap<>();
             return 0;
         }
         if (this.waitingAutoAgv.size() == 0) {
             return 0;
         }
-        int now = (int) Math.floor(/*performance.now() / 1000*/ 5);
+        int now = (int) Math.floor(GameController.now() / 1000);
         for (int key : this.waitingAutoAgv.keySet()) {
             Set<WaitingDuration> value = this.waitingAutoAgv.get(key);
             int average = 0;
@@ -120,30 +121,30 @@ public class Forcasting {
             }
             result += average;
         }
-        result = (int) Math.floor(result * 100) / 100;
+        result = Math.floor(result * 100) / 100;
         return result;
     }
 
     public void log(Text text) {
-        int total = this.totalAverageWaitingTime();
+        double total = this.totalAverageWaitingTime();
         int numAutoAgv = this.waitingAutoAgv.size();
-        int result = 0;
+        double result = 0;
         if (numAutoAgv != 0) {
             result = total / numAutoAgv;
         }
-        result = (int) Math.floor(result * 100) / 100;
-//        text.setText("Tu giay: " + Math.floor((performance.now() / 1000) - Constant.DELTA_T)
-//                + ", #AutoAgv: " + numAutoAgv + " totalTime: " +
-//                total + " avg: " + result + "#Stop: " + this.waitingAutoAgv.get(2).size());
+        result =  Math.floor(result * 100) / 100;
+        text.setText("Tu giay: " + Math.floor((GameController.now() / 1000) - Constant.DELTA_T)
+                + ", #AutoAgv: " + numAutoAgv + " totalTime: " +
+                total + " avg: " + result + "#Stop: " + this.waitingAutoAgv.get(2).size());
 
     }
 
     public void calculate() {
-        int total = this.totalAverageWaitingTime();
+        double total = this.totalAverageWaitingTime();
         int numAutoAgv = this.waitingAutoAgv.size();
         if (numAutoAgv != 0) {
             this.averageAverageWaitingTime = total / numAutoAgv;
         }
-        this.averageAverageWaitingTime = (int) Math.floor(this.averageAverageWaitingTime * 100) / 100;
+        this.averageAverageWaitingTime = Math.floor(this.averageAverageWaitingTime * 100) / 100;
     }
 }

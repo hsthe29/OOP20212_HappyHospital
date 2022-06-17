@@ -12,7 +12,7 @@ public class TilemapLayer {
 
         this.tiles2D = new Tile[52][28];
         for (Tile tile : tiles) {
-            this.tiles2D[tile.X()][tile.Y()] = tile;
+            this.tiles2D[tile.x][tile.y] = tile;
         }
         this.tiles = tiles;
     }

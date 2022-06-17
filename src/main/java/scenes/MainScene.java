@@ -1,5 +1,6 @@
 package scenes;
 
+import com.google.gson.Gson;
 import game.algorithm.RandomDistribution;
 import game.classes.*;
 import game.classes.statistic.Forcasting;
@@ -10,21 +11,18 @@ import game.controller.GameController;
 import game.tilemaps.Tile;
 import game.tilemaps.Tilemap;
 import game.tilemaps.TilemapLayer;
+import game.utilities.save.*;
 import javafx.scene.Parent;
 import javafx.beans.NamedArg;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class MainScene extends GameScene {
@@ -50,12 +48,7 @@ public class MainScene extends GameScene {
     private ArrayList<Position> doorPos;
     private int MAX_AGENT = 10;
     private int count = 0;
-//    public int sec = 0;
-
-    private SimpleIntegerProperty spI = new SimpleIntegerProperty(1);
-
     private double _harmfulness = 0;
-
     private Graph spaceGraph;
     private EmergencyGraph emergencyGraph;
     private ArrayList<ArrayList<ArrayList<Position>>> adjacencyList;
@@ -72,6 +65,8 @@ public class MainScene extends GameScene {
     public VBox desTable;
 
     private Image imgs[] = new Image[2];
+
+    public final FileChooser fileChooser = new FileChooser();
 
 
     public MainScene(
@@ -106,23 +101,23 @@ public class MainScene extends GameScene {
             }
         }
 
-        scrollPane.requestFocus();
+//        scrollPane.requestFocus();
 
-        scrollPane.setOnKeyPressed(event -> {
+        vBox.setOnKeyPressed(event -> {
             switch (event.getCode()) {
-                case W -> this.controller.keyW.set(true);
-                case S -> this.controller.keyS.set(true);
-                case A -> this.controller.keyA.set(true);
-                case D -> this.controller.keyD.set(true);
+                case W -> this.controller.keyW = true;
+                case S -> this.controller.keyS = true;
+                case A -> this.controller.keyA = true;
+                case D -> this.controller.keyD = true;
             }
         });
 
-        scrollPane.setOnKeyReleased(event -> {
+        vBox.setOnKeyReleased(event -> {
             switch (event.getCode()) {
-                case W -> this.controller.keyW.set(false);
-                case S -> this.controller.keyS.set(false);
-                case A -> this.controller.keyA.set(false);
-                case D -> this.controller.keyD.set(false);
+                case W -> this.controller.keyW = false;
+                case S -> this.controller.keyS = false;
+                case A -> this.controller.keyA = false;
+                case D -> this.controller.keyD = false;
             }
         });
 
@@ -183,7 +178,7 @@ public class MainScene extends GameScene {
         while (!Constant.validDestination((int) this.pathPos.get(r).x, (int) this.pathPos.get(r).y, 1, 14)) {
             r = (int) Math.floor(Math.random() * this.pathPos.size());
         }
-        this.agv = new Agv(this, 1, 14, this.pathPos.get(r).dx, this.pathPos.get(r).dy, this.pathLayer);
+        this.agv = new Agv(this, 1 * 32, 14 * 32, this.pathPos.get(r).dx, this.pathPos.get(r).dy, this.pathLayer);
 
         this.agv.writeDeadline(this.desTable);
 
@@ -219,8 +214,8 @@ public class MainScene extends GameScene {
                 "-fx-fill: \"#000\";" +
                 "-fx-font-family: \"Comic Sans MS\"");
 
-        this.saveButton.setOnAction(e -> System.out.println("Save Clicked"));
-        this.loadButton.setOnAction(e -> System.out.println("Load clicked"));
+        this.saveButton.setOnAction(e -> handleClickSaveButton());
+        this.loadButton.setOnAction(e -> handleClickLoadButton());
 
         this.setAgentInput = new TextField();
         this.setAgentInput.setPromptText("Number of Agents");
@@ -295,6 +290,7 @@ public class MainScene extends GameScene {
             if(controller.isGameRunning) {
                 controller.pauseGameLoop();
                 pauseButton.setImage(imgs[1]);
+
             } else {
                 if(!controller.gameLoaded) {
                     this.loadRestPart();
@@ -314,6 +310,94 @@ public class MainScene extends GameScene {
         this.getGraph().updateState();
         this.agv.update();
         this.forcasting.calculate();
+    }
+
+    private void handleClickSaveButton() {
+        if(!controller.gameLoaded) return;
+
+        boolean isRunning = controller.isGameRunning;
+        if(isRunning)
+            controller.pauseGameLoop();
+        SaveAgv saveAgv = new SaveAgv(agv.getTranslateX(), agv.getTranslateY());
+
+        int n = agents.size();
+
+        SavePos[] startPos = new SavePos[n];
+        SavePos[] endPos = new SavePos[n];
+        int[] id = new int[n];
+        int i = 0;
+        for(Agent a: this.agents) {
+            startPos[i] = new SavePos(a.getTranslateX(), a.getTranslateY());
+            endPos[i] = new SavePos(a.getEndPos().dx, a.getEndPos().dy);
+            id[i] = a.get_Id();
+            i++;
+        }
+
+        SaveAgent saveAgents = new SaveAgent(startPos, endPos, id);
+
+        SaveMap saveMap = new SaveMap(saveAgv, saveAgents);
+        Gson gson = new Gson();
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(System.getProperty("user.home") + "\\Downloads\\save.json"))) {
+            String saveString = gson.toJson(saveMap, SaveMap.class);
+            bw.write(saveString);
+            bw.flush();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+        if(isRunning)
+            controller.startGameLoop();
+    }
+
+    private void handleClickLoadButton() {
+        if(!controller.gameLoaded) return;
+
+        boolean isRunning = controller.isGameRunning;
+        if(isRunning)
+            controller.pauseGameLoop();
+
+        openFileChooser(fileChooser);
+        File file = fileChooser.showOpenDialog(this.getWindow());
+
+        Gson gson = new Gson();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            SaveMap map = gson.fromJson(reader, SaveMap.class);
+
+            agv.setX_(map.agv.x);
+            agv.setY_(map.agv.y);
+
+            SaveAgent mapAgents = map.agents;
+            while(!agents.isEmpty()) {
+                agents.get(0).eliminate();
+            }
+            int n = mapAgents.id.length;
+            for(int i = 0; i < n; i++) {
+                if(mapAgents.startPos[i] != null) {
+                    this.agents.add(new Agent(this, new Position(mapAgents.startPos[i].x / 32,
+                            mapAgents.startPos[i].y / 32), new Position(mapAgents.endPos[i].x, mapAgents.endPos[i].y),
+                            this.groundPos, mapAgents.id[i]));
+                }
+            }
+            reader.close();
+        }
+        catch (Exception e){
+            Alert alert = new Alert(Alert.AlertType.ERROR, "No file chosen or file content is not correct!", ButtonType.CANCEL);
+            alert.showAndWait();
+        }
+        if(isRunning)
+            controller.startGameLoop();
+    }
+
+    private void openFileChooser(final FileChooser fileChooser) {
+        fileChooser.setTitle("Select json file");
+        fileChooser.setInitialDirectory(
+                new File(System.getProperty("user.home") + "\\Downloads")
+        );
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("JSON", "*.json")
+        );
     }
 
     private void createRandomAutoAgv() {
@@ -365,17 +449,22 @@ public class MainScene extends GameScene {
         imgs[1] = new Image("assets/icons/play.png");
 
         this.groundLayer.getTiles().forEach(e -> {
-            Position pos = new Position(e.X(), e.Y());
+            Position pos = new Position(e.x, e.y);
             this.groundPos.add(pos);
         });
 
         this.pathLayer.getTiles().forEach(e -> {
-            Position pos = new Position(e.X(), e.Y());
+            Position pos = new Position(e.x, e.y);
             this.pathPos.add(pos);
         });
 
         this.doorLayer.getTiles().forEach(e -> {
-            Position pos = new Position(e.X(), e.Y());
+            Position pos = new Position(e.x, e.y);
+            this.doorPos.add(pos);
+        });
+
+        this.gateLayer.getTiles().forEach(e -> {
+            Position pos = new Position(e.x, e.y);
             this.doorPos.add(pos);
         });
     }
@@ -406,7 +495,6 @@ public class MainScene extends GameScene {
                     (int) Math.floor((Math.random() * 100))
             );
 
-            // set interval them ngau nhien agent vao
             this.agents.add(agent);
 
         }
@@ -475,16 +563,16 @@ public class MainScene extends GameScene {
     }
 
     private boolean checkTilesUndirection(Tile tileA, Tile tileB) {
-        if (tileA.X() == tileB.X() && tileA.Y() == tileB.Y() + 1) {
+        if (tileA.x == tileB.x && tileA.y == tileB.y + 1) {
             if (tileB.getDirection() == ModeOfDirection.TOP) return true;
         }
-        if (tileA.X() + 1 == tileB.X() && tileA.Y() == tileB.Y()) {
+        if (tileA.x + 1 == tileB.x && tileA.y == tileB.y) {
             if (tileB.getDirection() == ModeOfDirection.RIGHT) return true;
         }
-        if (tileA.X() == tileB.X() && tileA.Y() + 1 == tileB.Y()) {
+        if (tileA.x == tileB.x && tileA.y + 1 == tileB.y) {
             if (tileB.getDirection() == ModeOfDirection.BOTTOM) return true;
         }
-        if (tileA.X() == tileB.X() + 1 && tileA.Y() == tileB.Y()) {
+        if (tileA.x == tileB.x + 1 && tileA.y == tileB.y) {
             if (tileB.getDirection() == ModeOfDirection.LEFT) return true;
         }
         return false;
@@ -498,16 +586,16 @@ public class MainScene extends GameScene {
         } else {
             // neu o dang xet co huong
             if (tileA.getDirection() == ModeOfDirection.TOP) {
-                if (tileA.X() == tileB.X() && tileA.Y() == tileB.Y() + 1) return true;
+                if (tileA.x == tileB.x && tileA.y == tileB.y + 1) return true;
             }
             if (tileA.getDirection() == ModeOfDirection.RIGHT) {
-                if (tileA.X() + 1 == tileB.X() && tileA.Y() == tileB.Y()) return true;
+                if (tileA.x + 1 == tileB.x && tileA.y == tileB.y) return true;
             }
             if (tileA.getDirection() == ModeOfDirection.BOTTOM) {
-                if (tileA.X() == tileB.X() && tileA.Y() + 1 == tileB.Y()) return true;
+                if (tileA.x == tileB.x && tileA.y + 1 == tileB.y) return true;
             }
             if (tileA.getDirection() == ModeOfDirection.LEFT) {
-                if (tileA.X() == tileB.X() + 1 && tileA.Y() == tileB.Y()) return true;
+                if (tileA.x == tileB.x + 1 && tileA.y == tileB.y) return true;
             }
         }
         return false;
@@ -519,7 +607,7 @@ public class MainScene extends GameScene {
             for (int j = 0; j < tiles.size(); ++j) {
                 if (i != j) {
                     if (this.checkTilesNeighbor(tiles.get(i), tiles.get(j))) {
-                        this.adjacencyList.get(tiles.get(i).X()).get(tiles.get(i).Y()).add(new Position(tiles.get(j).X(), tiles.get(j).Y()));
+                        this.adjacencyList.get(tiles.get(i).x).get(tiles.get(i).y).add(new Position(tiles.get(j).x, tiles.get(j).y));
                     }
                 }
             }
@@ -529,4 +617,5 @@ public class MainScene extends GameScene {
     public Agv getAgv() {
         return this.agv;
     }
+
 }

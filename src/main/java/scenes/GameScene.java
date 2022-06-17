@@ -1,18 +1,14 @@
 package scenes;
 
-import game.DisplayList;
-import game.Physics;
+import game.utilities.DisplayList;
+import game.utilities.Physics;
 import game.controller.GameController;
-import game.entities.Sprite;
-import game.tilemaps.TilemapLayer;
-import game.utilities.load.LoaderPlugin;
+import game.utilities.loadcomponent.LoaderPlugin;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-
-import java.nio.channels.spi.SelectorProvider;
 
 public class GameScene extends Scene {
 

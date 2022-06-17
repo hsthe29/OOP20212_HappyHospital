@@ -28,7 +28,7 @@ public class Agent extends Actor{
             ArrayList<Position> groundPos,
             int id
     ) {
-        super(scene, startPos.dx, startPos.dy, "agent");
+        super(scene, startPos.x * 32, startPos.y * 32, "agent");
         this.startPos = startPos;
         this.endPos = endPos;
         this.groundPos = groundPos;
@@ -79,11 +79,11 @@ public class Agent extends Actor{
 
     public void goToDestinationByVertexs() {
         if(this.next == this.vertexs.size()) {
-            this.agentText.setText("DONE");
-            this.agentText.setFont(new Font(12));
-            this.agentText.setX(this.getTranslateX() - 1);
-            this.x = this.vertexs.get(this.vertexs.size() - 1).dx * 32;
-            this.y = this.vertexs.get(this.vertexs.size() - 1).dy * 32;
+//            this.agentText.setText("DONE");
+//            this.agentText.setFont(new Font(12));
+//            this.agentText.setX_(this.getTranslateX() - 1);
+//            this.x = this.vertexs.get(this.vertexs.size() - 1).dx * 32;
+//            this.y = this.vertexs.get(this.vertexs.size() - 1).dy * 32;
             this.setVelocity(0);
             this.eliminate();
             return;
@@ -99,10 +99,8 @@ public class Agent extends Actor{
                     this.vertexs.get(this.next).y * 32,
                     this.speed
             );
-           this.agentText.set_X(this.getTranslateX());
-            this.agentText.set_Y(this.getTranslateY());
-            this.agentText.moveX();
-            this.agentText.moveY();
+           this.agentText.setX_(this.getTranslateX());
+            this.agentText.setY_(this.getTranslateY());
         } else {
             this.next++;
         }
@@ -146,7 +144,7 @@ public class Agent extends Actor{
         }
     }
 
-    private void eliminate() {
+    public void eliminate() {
         this.endText.destroy();
         this.agentText.destroy();
         this.destroy();

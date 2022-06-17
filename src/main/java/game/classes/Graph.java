@@ -123,8 +123,8 @@ public class Graph {
     }
 
     public void removeAgent(Agent agent) {
-        int i = agent.x;
-        int j = agent.y;
+        int i = (int) (agent.x / 32);
+        int j = (int) (agent.y / 32);
         this.nodes[i][j].setState(StateOfNode2D.EMPTY);
         this.busy[i][j] = 0;
     }
