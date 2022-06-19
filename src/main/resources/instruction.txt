@@ -1,0 +1,22 @@
+I. Hướng dẫn chạy code:
+    - Cài đặt IntelliJ IDEA (ưu tiên) hoặc Eclipse IDE
+    - `git clone https://github.com/hsthe29/OOP20212_HappyHospital.git`
+    - Mở IDE, mở project `OOP20212_HappyHospital`
+    - Chạy file `Main.java`
+
+  Nếu như chạy bị lỗi:
+    1. Lỗi `Project SDK is not defined`
+        - `File -> Project Structure`, ở tab Project, chọn SDK và ấn Apply
+    2. Lỗi liên quan đọc file
+        - Tất cả các file resources đều nằm ở mục `resource`. Nếu bị lỗi, thay các path bằng absolute path.
+
+  Lưu ý: Project được build bằng Gradle. Lần đầu chạy phải để Gradle tải một số thứ nên chờ khá lâu.
+
+II. Hướng dẫn chơi game:
+    - Trong game này người chơi sẽ được điều khiển một AGV trong bệnh viện, nhiệm vụ của người chơi phải di chuyển
+     AGV nhanh nhất đến đích, trước deadline và tránh va chạm với Agents trong bệnh viện
+    - Người chơi sẽ được thi đua với các AGV do máy (AI) điều khiển. Việc phải về đích với thứ hạng cao là một trong các nhiệm vụ nữa của người chơi
+    - Để điều khiển AGV, người chơi cần dùng các phím `W A S D` trên bàn phím để di chuyển lên/trái/xuống/phải AGV
+    - Để di chuyển AGV rẽ sang hướng khác cần `nhấn giữ đồng thời 2 nút` trên bàn phím
+
+III. Link chơi game (phiên bản gốc, ngôn ngữ TypeScript): https://happyhospital.herokuapp.com/
