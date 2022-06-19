@@ -1,5 +1,6 @@
 package game.utilities;
 
+import game.classes.Agent;
 import game.classes.AutoAgv;
 import game.entities.Sprite;
 import game.tilemaps.Tile;
@@ -27,7 +28,17 @@ public class Physics {
 
     }
 
-    public void collider(Sprite sprite, TilemapLayer objs) {
+    public boolean collider(Sprite sprite_a, Sprite sprite_b ) {
+        if(sprite_a.intersects(sprite_b))
+            return true;
+        return false;
+    }
+
+    public void handleCollision(AutoAgv agv, Agent agent) {
+        // chay
+        if(true) {
+
+        }
 
     }
 
