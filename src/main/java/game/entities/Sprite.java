@@ -1,6 +1,7 @@
 package game.entities;
 
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.ImageView;
 import scenes.MainScene;
 
@@ -23,9 +24,23 @@ public class Sprite extends ImageView implements GameObject {
         this.y = y;
     }
 
-    public void setVelocity(double velocity) { // abstract
+    public void setVelocity(double velocity) {
         this.velocityX.set(velocity);
         this.velocityY.set(velocity);
+    }
+
+    public Rectangle2D getBoundary(){
+        return new Rectangle2D(this.getTranslateX(),this.getTranslateY(),32,32);
+    }
+
+    public Rectangle2D getBoundary(double width, double height){
+        double dw = (width - 32) / 2;
+        double dh = (height - 32) / 2;
+        return new Rectangle2D(this.getTranslateX() - dw,this.getTranslateY() - dh,32 + dw,32 + dh);
+    }
+
+    public boolean intersects(Sprite sprite){
+        return sprite.getBoundary().intersects(this.getBoundary());
     }
 
     @Override
