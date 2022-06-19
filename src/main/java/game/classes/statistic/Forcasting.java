@@ -101,7 +101,11 @@ public class Forcasting {
             return 0;
         }
         int now = (int) Math.floor(GameController.now() / 1000);
-        for (int key : this.waitingAutoAgv.keySet()) {
+
+        Integer[] keys = this.waitingAutoAgv.keySet().toArray(new Integer[0]);
+        for (int key : keys) {
+            if(!this.waitingAutoAgv.containsKey(key)) continue;
+
             Set<WaitingDuration> value = this.waitingAutoAgv.get(key);
             int average = 0;
             int count = 0;

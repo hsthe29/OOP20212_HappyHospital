@@ -59,6 +59,7 @@ public class AutoAgv extends Actor {
         this.thoigiandichuyen = GameController.now();
         this.estimateArrivalTime(x * 32, y * 32, endX * 32, endY * 32);
         this.hybridState = new RunningState(false);
+        if(this.path == null) this.destroy();
     }
 
     public void preUpdate(int time, int delta) {

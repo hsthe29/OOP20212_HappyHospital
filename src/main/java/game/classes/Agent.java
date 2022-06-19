@@ -184,14 +184,7 @@ public class Agent extends Actor{
     public int get_Id() {
         return this.id;
     }
-//
-//    public void eliminate() {
-//        this.scene.events.emit("destroyAgent", this);
-//        this.endText.destroy();
-//        this.agentText.destroy();
-//        this.destroy();
-//    }
-//
+
 //    public void pause() {
 //        this.setVelocity(0, 0);
 //        this.setActive(false);
@@ -200,7 +193,7 @@ public class Agent extends Actor{
 //        this.setActive(true);
 //    }
 //
-//    public void handleOverlap() {
+//    public void waitOverlap() {
 //        if (this.isOverlap) return;
 //        this.isOverlap = true;
 ////        setTimeout(() => {

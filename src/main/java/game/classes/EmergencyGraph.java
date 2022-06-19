@@ -46,6 +46,8 @@ public class EmergencyGraph extends Graph {
                 int y = this.nodes[j][k].y;
                 this.nodes[j][k].setWeight(0);
                 this.virtualNodes[j][k].setWeight(0);
+
+                // Cần cập nhật lại
                 for(int i = 0; i < this.agents.size(); i++) {
                     double dist = Math.sqrt((x - this.agents.get(i).x) * (x - this.agents.get(i).x) + (y - this.agents.get(i).y) * (y - this.agents.get(i).y));
                     if(dist / this.agents.get(i).speed < Constant.DELTA_T) {

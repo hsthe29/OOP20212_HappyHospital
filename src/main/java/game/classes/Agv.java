@@ -10,11 +10,12 @@ import javafx.util.Duration;
 import scenes.MainScene;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Agv extends Actor{
 
-    private PauseTransition hideToast1 = new PauseTransition(Duration.seconds(1));
-    private PauseTransition hideToast2 = new PauseTransition(Duration.seconds(1));
+    private PauseTransition hideToastOverLay = new PauseTransition(Duration.seconds(1));
+    private PauseTransition hideToastInvalid = new PauseTransition(Duration.seconds(1));
     private Label overlayToast;
     private Label invalidToast;
 
@@ -76,34 +77,41 @@ public class Agv extends Actor{
         overlayToast = new Label("AGV va chạm với Agent!");
         overlayToast.setStyle(style);
         overlayToast.setVisible(false);
-        hideToast1.setOnFinished(e -> overlayToast.setVisible(false));
+        hideToastOverLay.setOnFinished(e -> overlayToast.setVisible(false));
         this.scene.getStackPane().getChildren().add(overlayToast);
-        overlayToast.setTranslateY(350);
+        overlayToast.setTranslateY(300);
 
         invalidToast = new Label("Di chuyển không hợp lệ!");
         invalidToast.setStyle(style);
         invalidToast.setVisible(false);
-        hideToast2.setOnFinished(e -> invalidToast.setVisible(false));
+        hideToastInvalid.setOnFinished(e -> invalidToast.setVisible(false));
         this.scene.getStackPane().getChildren().add(invalidToast);
         invalidToast.setTranslateY(300);
     }
 
     public void ToastInvalidMove() {
         invalidToast.setVisible(true);
-        hideToast2.play();
+        hideToastInvalid.play();
     }
     public void ToastOverLay() {
         overlayToast.setVisible(true);
-        hideToast1.play();
+        hideToastOverLay.play();
     }
 
     public void update() {
         this.setVelocity(0);
-        this.text.setX_(this.getTranslateX());
-        this.text.setY_(this.getTranslateY());
         if(isDisable) return;
 
         boolean t = true, b = true, l = true, r = true;
+
+        Iterator<Agent> agentIterator = scene.agents.iterator();
+        while(agentIterator.hasNext()){
+            Agent agent = agentIterator.next();
+            if(scene.physics.collider(scene.getAgv(),agent)){
+                ToastOverLay();
+                return;
+            }
+        }
 
         ArrayList<Tile> tiles = this.getTilesWithin();
         for (Tile tile: tiles) {
@@ -163,6 +171,8 @@ public class Agv extends Actor{
             }
         }
         moveX();
+        this.text.setX_(this.getTranslateX());
+        this.text.setY_(this.getTranslateY());
     }
 
     private ArrayList<Tile> getTilesWithin() {

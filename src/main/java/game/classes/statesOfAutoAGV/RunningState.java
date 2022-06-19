@@ -1,5 +1,6 @@
 package game.classes.statesOfAutoAGV;
 
+import game.classes.Agent;
 import game.classes.AutoAgv;
 import game.classes.Node2D;
 import game.classes.StateOfNode2D;
@@ -7,6 +8,8 @@ import game.classes.statistic.WaitingDuration;
 import game.constant.Constant;
 import game.controller.GameController;
 import scenes.MainScene;
+
+import java.util.Iterator;
 
 public class RunningState extends HybridState{
     public boolean _isLastMoving;
@@ -52,7 +55,6 @@ public class RunningState extends HybridState{
         //Khoảng cách của autoAgv với các actors khác đã va chạm
         double shortestDistance = Constant.minDistance(agv, agv.collidedActors);
 
-
         if (nodeNext.state == StateOfNode2D.BUSY || shortestDistance < Constant.SAFE_DISTANCE) {
             agv.setVelocity(0, 0);
             if (agv.waitT != 0) return;
@@ -60,9 +62,6 @@ public class RunningState extends HybridState{
             agv.scene.forcasting.
                     addDuration(agv.getAgvID(), new WaitingDuration((int) Math.floor(agv.waitT / 1000), -1, 0));
         } else {
-//            System.out.println("running");
-
-
             if(shortestDistance >= Constant.SAFE_DISTANCE) {
                 agv.collidedActors.clear();
             }
@@ -74,10 +73,22 @@ public class RunningState extends HybridState{
                 agv.waitT = 0;
             }
             // di chuyển đến nút tiếp theo
-//            System.out.println("test: " + agv.x + ", " + nodeNext.x * 32);
+            /* Nếu AutoAgv có va chạm với một agent nào đó thì dừng lại
+               chờ agent qua mới đi tiếp*/
+            boolean collided = false;
+            Iterator<Agent> agentIterator = agv.scene.agents.iterator();
+            while(agentIterator.hasNext()){
+                Agent agent = agentIterator.next();
+                if(agv.scene.physics.collider(agv, agent)){
+                    collided = true;
+                    break;
+                }
+            }
             if (Math.abs(agv.getTranslateX() - nodeNext.x * 32) > 1 || Math.abs(agv.getTranslateY() - nodeNext.y * 32) > 1) {
-
-                agv.scene.physics.moveTo(agv, nodeNext.x * 32, nodeNext.y * 32, 1);
+                if(!collided)
+                    agv.scene.physics.moveTo(agv, nodeNext.x * 32, nodeNext.y * 32, 1);
+                else
+                    agv.setVelocity(0);
             } else {
                 /**
                  * Khi đã đến nút tiếp theo thì cập nhật trạng thái
@@ -93,14 +104,12 @@ public class RunningState extends HybridState{
                 agv.sobuocdichuyen++;
 //                 cap nhat lai duong di Agv moi 10 buoc di chuyen;
 //                 hoac sau 10s di chuyen
-                if (agv.sobuocdichuyen % 10 == 0 || GameController.now() - agv.thoigiandichuyen > 10000
-                ) {
+                if (agv.sobuocdichuyen % 10 == 0 || GameController.now() - agv.thoigiandichuyen > 10000) {
                     agv.thoigiandichuyen = GameController.now();
                     agv.cur = 0;
                     agv.path = agv.calPathAStar(agv.curNode, agv.endNode);
                 }
             }
         }
-
     }
 }
