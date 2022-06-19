@@ -37,7 +37,7 @@ class Spot {
 
     public boolean equal(Spot spot) {
         if (spot == null) return false;
-        return this.i == spot.i && this.j == spot.j;
+        return Math.abs(this.i - spot.i)  < 1e-7 && Math.abs(this.j - spot.j) < 1e-7;
     }
 }
 
