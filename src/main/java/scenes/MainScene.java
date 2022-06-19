@@ -21,9 +21,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
+import javafx.stage.Window;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MainScene extends GameScene {
 
@@ -185,7 +189,6 @@ public class MainScene extends GameScene {
         this.createRandomAutoAgv();
 //        this.events.on("destroyAgent", this.destroyAgentHandler, this);
         this.createAgents(10, 1000);
-        this.physics.collider(this.agv, this.noPathLayer);
 //        this.openLinkInstruction();
 
         controller.startGameLoop();
@@ -301,7 +304,7 @@ public class MainScene extends GameScene {
                 pauseButton.setImage(imgs[0]);
             }
         });
-        pauseButton.setTranslateX(650);
+        pauseButton.setTranslateX(700);
         pauseButton.setTranslateY(30);
         this.pane.getChildren().addAll(innerVbox, innerVbox2, pauseButton, txt, innerScr3);
     }
@@ -402,7 +405,7 @@ public class MainScene extends GameScene {
 
     private void createRandomAutoAgv() {
         int r = (int) Math.floor(Math.random() * this.pathPos.size());
-        while (!Constant.validDestination((int) this.pathPos.get(r).x, (int) this.pathPos.get(r).y, 1, 13)) {
+        while (!Constant.validDestination((int) this.pathPos.get(r).dx, (int) this.pathPos.get(r).dy, 1, 13)) {
             r = (int) Math.floor(Math.random() * this.pathPos.size());
         }
         if (this.getGraph() != null) {
@@ -430,7 +433,30 @@ public class MainScene extends GameScene {
     }
 
     private void openLinkInstruction() {
-        System.out.println("Clicked");
+        boolean isRunning = controller.isGameRunning;
+        if(isRunning)
+            controller.pauseGameLoop();
+
+        try(FileInputStream fis = new FileInputStream("src/main/resources/instruction.txt");
+            InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
+            BufferedReader br = new BufferedReader(isr)
+        ) {
+            Dialog<String> dialog = new Dialog<>();
+            dialog.setHeight(700);
+            dialog.setResizable(true);
+            //Setting the title
+            dialog.setTitle("Instruction");
+            ButtonType type = new ButtonType("Ok", ButtonBar.ButtonData.OK_DONE);
+
+            dialog.setContentText(br.lines().collect(Collectors.joining("\n")));
+            dialog.getDialogPane().getButtonTypes().add(type);
+            dialog.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(isRunning)
+            controller.startGameLoop();
     }
 
     private void initMap() {
@@ -475,7 +501,7 @@ public class MainScene extends GameScene {
 
     public void setHarmfullness(double value) {
         this._harmfulness = value;
-        this.controller.harmfulness.set(String.format("H.ness: %.3f", this._harmfulness));
+        this.controller.harmfulness.set(String.format("H.ness: %,.3f", this._harmfulness));
     }
 
     public void createAgents(int numAgentInit, int time) {
