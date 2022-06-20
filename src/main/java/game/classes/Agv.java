@@ -33,7 +33,7 @@ public class Agv extends Actor{
 
         this.pathLayer = pathLayer;
 
-        this.estimateArrivalTime(x * 32, y * 32,  desX * 32, desY * 32);
+        this.estimateArrivalTime(x, y,  desX, desY);
 
         this.text = new Text(
                 this.scene,
