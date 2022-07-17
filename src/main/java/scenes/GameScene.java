@@ -1,9 +1,9 @@
 package scenes;
 
-import game.utilities.DisplayList;
-import game.utilities.Physics;
-import game.controller.GameController;
-import game.utilities.loadcomponent.LoaderPlugin;
+import kernel.utilities.DisplayList;
+import kernel.utilities.Physics;
+import kernel.utilities.GameController;
+import kernel.utilities.loadcomponent.LoaderPlugin;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -11,8 +11,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 
 public class GameScene extends Scene {
-
-
     protected ScrollPane scrollPane;
     protected GridPane gridPane;
     protected StackPane stackPane;
@@ -21,7 +19,7 @@ public class GameScene extends Scene {
 
     public final LoaderPlugin load = LoaderPlugin.getInstance();
     public final DisplayList displayList = new DisplayList();
-    public final Physics physics= new Physics((MainScene) this);
+    public final Physics physics= new Physics((MainScene) this); // dependency injection
     public GameController controller;
     public GameScene(Parent root, double width, double height, boolean depthBuffer) {
         super(root, width, height, depthBuffer);

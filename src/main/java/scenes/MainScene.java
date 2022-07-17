@@ -1,17 +1,17 @@
 package scenes;
 
+import classes.*;
 import com.google.gson.Gson;
-import game.algorithm.RandomDistribution;
-import game.classes.*;
-import game.classes.statistic.Forcasting;
-import game.constant.Constant;
-import game.constant.ModeOfDirection;
-import game.constant.ModeOfPathPlanning;
-import game.controller.GameController;
-import game.tilemaps.Tile;
-import game.tilemaps.Tilemap;
-import game.tilemaps.TilemapLayer;
-import game.utilities.save.*;
+import kernel.algorithm.RandomDistribution;
+import classes.statistic.Forcasting;
+import kernel.constant.Constant;
+import kernel.constant.ModeOfDirection;
+import kernel.constant.ModeOfPathPlanning;
+import kernel.utilities.GameController;
+import tilemaps.Tile;
+import tilemaps.Tilemap;
+import tilemaps.TilemapLayer;
+import kernel.utilities.save.*;
 import javafx.scene.Parent;
 import javafx.beans.NamedArg;
 import javafx.geometry.Insets;
@@ -21,9 +21,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import javafx.stage.Popup;
-import javafx.stage.Window;
-
+import socket.Message;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -31,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class MainScene extends GameScene {
 
-    public Set<AutoAgv> autoAgvs;
+    public List<AutoAgv> autoAgvs;
     private Agv agv;
     public ArrayList<Agent> agents;
     private Tilemap map = new Tilemap();
@@ -57,7 +55,6 @@ public class MainScene extends GameScene {
     private EmergencyGraph emergencyGraph;
     private ArrayList<ArrayList<ArrayList<Position>>> adjacencyList;
     public Forcasting forcasting;
-
     public HashMap<String, int[]> mapOfExits = new HashMap<>() {{
         put("Gate1", new int[]{50, 13, 0});
         put("Gate2", new int[]{50, 14, 0});
@@ -67,11 +64,8 @@ public class MainScene extends GameScene {
     private Label timeText;
     private Label harmfulTable;
     public VBox desTable;
-
     private Image imgs[] = new Image[2];
-
     public final FileChooser fileChooser = new FileChooser();
-
 
     public MainScene(
             @NamedArg("root") Parent root,
@@ -80,20 +74,20 @@ public class MainScene extends GameScene {
             @NamedArg("depthBuffer") boolean depthBuffer
     ) throws IOException {
         super(root, width, height, depthBuffer);
-
         vBox = (VBox) root;
         pane = (Pane) vBox.getChildren().get(0);
         stackPane = (StackPane) vBox.getChildren().get(1);
         scrollPane = (ScrollPane) stackPane.getChildren().get(0);
         gridPane = (GridPane) scrollPane.getContent();
 
-        this.controller = new GameController(this);
+        this.controller = GameController.getInstance();
+        this.controller.setScene(this);
         this.agents = new ArrayList<>();
         this.groundPos = new ArrayList<>();
         this.pathPos = new ArrayList<>();
         this.adjacencyList = new ArrayList<>();
         this.doorPos = new ArrayList<>();
-        this.autoAgvs = new HashSet<>();
+        this.autoAgvs = new ArrayList<>();
         this.forcasting = new Forcasting();
 
         for (int i = 0; i < 52; ++i) {
@@ -104,9 +98,6 @@ public class MainScene extends GameScene {
                 this.adjacencyList.get(i).set(j, new ArrayList<>());
             }
         }
-
-//        scrollPane.requestFocus();
-
         vBox.setOnKeyPressed(event -> {
             switch (event.getCode()) {
                 case W -> this.controller.keyW = true;
@@ -115,7 +106,6 @@ public class MainScene extends GameScene {
                 case D -> this.controller.keyD = true;
             }
         });
-
         vBox.setOnKeyReleased(event -> {
             switch (event.getCode()) {
                 case W -> this.controller.keyW = false;
@@ -124,16 +114,44 @@ public class MainScene extends GameScene {
                 case D -> this.controller.keyD = false;
             }
         });
-
         map.setScene(this);
         createScene();
     }
+    /** Getter - Setter segment */
+    public Agv getAgv() {
+        return this.agv;
+    }
+
+    public Graph getGraph() {
+        if (Constant.MODE == ModeOfPathPlanning.FRANSEN) {
+            return this.spaceGraph;
+        } else {
+            return this.emergencyGraph;
+        }
+    }
+
+    public double getHarmfullness() {
+        return this._harmfulness;
+    }
+
+    public void setHarmfullness(double value) {
+        this._harmfulness = value;
+        this.controller.harmfulness.set(String.format("H.ness: %,.3f", this._harmfulness));
+    }
+
+    public void setMaxAgents(int num) {
+        this.MAX_AGENT = num;
+    }
+    /** End of Getter - Setter segment */
 
     private void createScene() throws IOException {
         preLoad();
         create();
     }
 
+    /**
+     * Chuẩn bị các tài nguyên để hiện thị giao diện trò chơi
+     * */
     private void preLoad() throws IOException {
         this.load.baseURL = "assets/";
         this.load.baseJsonURL = "src/main/resources/assets/tilemaps/json/";
@@ -150,54 +168,42 @@ public class MainScene extends GameScene {
         this.pane.setMaxHeight(160);
     }
 
-    private void create() {
+    /**
+     * Hiện thị UI
+     * */
+    private void create() throws IOException {
         this.initMap();
         this.createAdjacencyList();
-
         this.initGraph();
         this.spaceGraph = new Graph(52, 28, this.adjacencyList, this.pathPos);
         this.emergencyGraph = new EmergencyGraph(52, 28, this.adjacencyList, this.pathPos);
-
         this.addButton();
-
-
-
-        // render
-        /*
-        var des = document.getElementById("des");
-          if (des) {
-            while (des.childNodes.length >= 1) {
-              des.firstChild && des.removeChild(des.firstChild);
-            }
-
-            des.appendChild(des.ownerDocument.createTextNode(this.timeTable?.text || ""));
-          }
-        * */
-
-
+        this.controller.oos.flush();
+        this.controller.oos.writeObject(new Message(1, this.groundPos));
+        this.controller.oos.flush();
+        this.controller.oos.writeObject(new Message(2, this.adjacencyList, this.pathPos));
     }
 
-    private void loadRestPart() {
+    /**
+     * Khi nhấn nút, các Actors được tạo và game đã bắt đầu
+     * */
+    private void loadRestPart() throws IOException, ClassNotFoundException {
         int r = (int) (Math.floor(Math.random() * this.pathPos.size()));
         while (!Constant.validDestination((int) this.pathPos.get(r).x, (int) this.pathPos.get(r).y, 1, 14)) {
             r = (int) Math.floor(Math.random() * this.pathPos.size());
         }
-        this.agv = new Agv(this, 1 * 32, 14 * 32, this.pathPos.get(r).dx, this.pathPos.get(r).dy, this.pathLayer);
+        this.agv = new Agv(this, 32, 14 * 32, this.pathPos.get(r).dx, this.pathPos.get(r).dy, this.pathLayer);
 
         this.agv.writeDeadline(this.desTable);
 
         this.createRandomAutoAgv();
-//        this.events.on("destroyAgent", this.destroyAgentHandler, this);
         this.createAgents(10, 1000);
-//        this.openLinkInstruction();
-
         controller.startGameLoop();
     }
 
-    public void setMaxAgents(int num) {
-        this.MAX_AGENT = num;
-    }
-
+    /**
+     * Thêm các nút và bảng hiện thị
+     * */
     private void addButton() {
         this.saveButton = new Button("Save data");
         this.saveButton.setTranslateX(40);
@@ -296,7 +302,11 @@ public class MainScene extends GameScene {
 
             } else {
                 if(!controller.gameLoaded) {
-                    this.loadRestPart();
+                    try {
+                        this.loadRestPart();
+                    } catch (IOException | ClassNotFoundException ex) {
+                        ex.printStackTrace();
+                    }
                     controller.gameLoaded = true;
                 } else {
                     controller.startGameLoop();
@@ -311,8 +321,17 @@ public class MainScene extends GameScene {
 
     public void update() {
         this.getGraph().updateState();
+        this.agv.stuckAGV = null;
         this.agv.update();
+        for(int i = 0; i < autoAgvs.size(); ++i) {
+            autoAgvs.get(i).stuckAGV = null;
+            autoAgvs.get(i).preUpdate();
+        }
+        for(int i = 0; i < agents.size(); ++i)
+            agents.get(i).preUpdate();
         this.forcasting.calculate();
+        this.agv.collidedActors.clear();
+        this.agv.collidedAGVs.clear();
     }
 
     private void handleClickSaveButton() {
@@ -405,30 +424,13 @@ public class MainScene extends GameScene {
 
     private void createRandomAutoAgv() {
         int r = (int) Math.floor(Math.random() * this.pathPos.size());
-        while (!Constant.validDestination((int) this.pathPos.get(r).dx, (int) this.pathPos.get(r).dy, 1, 13)) {
+        while (!Constant.validDestination(this.pathPos.get(r).dx, this.pathPos.get(r).dy, 1, 13)) {
             r = (int) Math.floor(Math.random() * this.pathPos.size());
         }
         if (this.getGraph() != null) {
             AutoAgv tempAgv = new AutoAgv(this, 1, 13, this.pathPos.get(r).dx, this.pathPos.get(r).dy, this.getGraph());
-
             tempAgv.writeDeadline(this.desTable);
-//            if(des) {
-//                while (des.childNodes.length >= 1) {
-//                    des.firstChild && des.removeChild(des.firstChild);
-//                }
-//
-//                des.appendChild(des.ownerDocument.createTextNode(this.timeTable.text));
-//
-//            }
             this.autoAgvs.add(tempAgv);
-        }
-    }
-
-    public Graph getGraph() {
-        if (Constant.MODE == ModeOfPathPlanning.FRANSEN) {
-            return this.spaceGraph;
-        } else {
-            return this.emergencyGraph;
         }
     }
 
@@ -478,36 +480,24 @@ public class MainScene extends GameScene {
             Position pos = new Position(e.x, e.y);
             this.groundPos.add(pos);
         });
-
         this.pathLayer.getTiles().forEach(e -> {
             Position pos = new Position(e.x, e.y);
             this.pathPos.add(pos);
         });
-
         this.doorLayer.getTiles().forEach(e -> {
             Position pos = new Position(e.x, e.y);
             this.doorPos.add(pos);
         });
-
         this.gateLayer.getTiles().forEach(e -> {
             Position pos = new Position(e.x, e.y);
             this.doorPos.add(pos);
         });
     }
 
-    public double getHarmfullness() {
-        return this._harmfulness;
-    }
-
-    public void setHarmfullness(double value) {
-        this._harmfulness = value;
-        this.controller.harmfulness.set(String.format("H.ness: %,.3f", this._harmfulness));
-    }
-
-    public void createAgents(int numAgentInit, int time) {
+    public void createAgents(int numAgentInit, int time) throws IOException, ClassNotFoundException {
         ArrayList<Integer> randoms = new ArrayList<>();
         while (randoms.size() < (numAgentInit << 1)) {
-            int r = (int) Math.floor(Math.random() * this.doorPos.size());
+            int r = (int) (Math.floor(Math.random() * this.doorPos.size()));
             if (!randoms.contains(r)) randoms.add(r);
         }
 
@@ -531,7 +521,7 @@ public class MainScene extends GameScene {
         this.controller.setAgentTime(time);
     }
 
-    public void addAgent() {
+    public void addAgent() throws IOException, ClassNotFoundException {
         if (this.agents.size() >= this.MAX_AGENT) return;
         RandomDistribution rand = new RandomDistribution();
         double ran = rand.getProbability();
@@ -547,37 +537,21 @@ public class MainScene extends GameScene {
                 (int) Math.floor(Math.random() * 100)
         );
 
-//        this.physics.add.overlap(this.agv, agent, () => {
-//                agent.handleOverlap();
-//        this.agv.handleOverlap();
-//      });
-//        this.autoAgvs.forEach(
-//                (item) => {
-//                item && this.physics.add.overlap(agent, item, () => {
-//                        item.freeze(agent);
-//          });
-//        }
-//      );
         this.agents.add(agent);
+
+        for(AutoAgv aagv: this.autoAgvs) {
+            if(aagv.intersects(agent)) {
+                agent.eliminate();
+                return;
+            }
+        }
         if (this.getGraph() != null)
             this.getGraph().setAgents(this.agents);
         this.count++;
-        if (this.count == 2) {
+        if (this.count == 3) {
             this.createRandomAutoAgv();
             this.count = 0;
         }
-    }
-
-    private void destroyAgentHandler(Agent agent) {
-        int index = 0;
-        for (int i = 0; i < this.agents.size(); i++) {
-            if (Objects.equals(this.agents.get(i).get_Id(), agent.get_Id())) index = i;
-        }
-        this.agents.remove(index);
-        this.getGraph().removeAgent(agent);
-        this.autoAgvs.forEach(e -> {
-            e.collidedActors.remove(agent);
-        });
     }
 
     public void initGraph() {
@@ -639,9 +613,4 @@ public class MainScene extends GameScene {
             }
         }
     }
-
-    public Agv getAgv() {
-        return this.agv;
-    }
-
 }
