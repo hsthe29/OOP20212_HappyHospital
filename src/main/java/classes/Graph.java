@@ -10,7 +10,7 @@ public class Graph {
     public int[][] busy;
     public ArrayList<Position> pathPos;
     private Set<AutoAgv> autoAgvs;
-    private Agv agv;
+    private boolean boostMode = false;
 
     public Graph(
             int width,
@@ -60,10 +60,6 @@ public class Graph {
 
     public Set<AutoAgv> getAutoAgvs() {
         return this.autoAgvs;
-    }
-
-    public void setMAgv(Agv agv) {
-        this.agv = agv;
     }
 
     public void setAgents(ArrayList<Agent> agents) {
@@ -188,8 +184,11 @@ public class Graph {
                     ) {
                         timexoay = 1;
                     }
-                    double tempG =
-                            astar_g[current.x][current.y] + 1 + current.getW() + timexoay;
+                    double tempG = astar_g[current.x][current.y];
+                    if(boostMode) {
+                        tempG += this.heuristic(current, neighbor);
+                    } else
+                        tempG += (1 + current.getW() + timexoay);
 
                     if (!this.isInclude(neighbor, closeSet)) {
                         if (this.isInclude(neighbor, openSet)) {
@@ -230,4 +229,11 @@ public class Graph {
     public int heuristic(Node2D node1, Node2D node2) {
         return Math.abs(node1.x - node2.x) + Math.abs(node1.y - node2.y);
     }
+    public boolean getBoostMode() {
+        return this.boostMode;
+    }
+    public void set(boolean value) {
+        this.boostMode = value;
+    }
+
 }

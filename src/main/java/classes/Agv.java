@@ -2,6 +2,7 @@ package classes;
 
 import kernel.constant.Constant;
 import kernel.constant.ModeOfDirection;
+import kernel.utilities.GameController;
 import tilemaps.Tile;
 import tilemaps.TilemapLayer;
 import javafx.animation.PauseTransition;
@@ -9,7 +10,6 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.util.Duration;
 import scenes.MainScene;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,8 +20,6 @@ public class Agv extends Actor implements Controllable{
     private PauseTransition hideToastInvalid = new PauseTransition(Duration.seconds(1));
     private Label overlayToast;
     private Label invalidToast;
-
-    private boolean isDisable = false;
     private Text text;
     private TilemapLayer pathLayer;
     private int desX;
@@ -29,6 +27,10 @@ public class Agv extends Actor implements Controllable{
     private Text desText;
     public List<Controllable> collidedAGVs;
     public Controllable stuckAGV = null;
+    private double start = 0;
+    private double time = 0;
+    private boolean isLastMoving = false;
+    public boolean isDone = false;
 
     public Agv(MainScene scene, int x, int y, int desX, int desY, TilemapLayer pathLayer) {
         super(scene, x, y, "agv");
@@ -49,7 +51,7 @@ public class Agv extends Actor implements Controllable{
                         "-fx-font-weight: 900;" +
                         " -fx-fill: green;" +
                         " -fx-stroke: black;" +
-                        " -fx-stroke-width: 1.5;" +
+                        " -fx-stroke-width: 1;" +
                         " -fx-font-size: 18px"
         );
 
@@ -57,16 +59,18 @@ public class Agv extends Actor implements Controllable{
                 this.scene, //
                 this.desX,
                 this.desY,
-                0, -15,
+                -1, -15,
                 "DES",
                 "-fx-font-family: \"Courier New\";" +
                         "-fx-font-weight: 900;" +
                         " -fx-fill: green;" +
                         " -fx-stroke: black;" +
-                        " -fx-stroke-width: 1.5;" +
+                        " -fx-stroke-width: 1;" +
                         " -fx-font-size: 22px");
         makeToast();
         collidedAGVs = new ArrayList<>(20);
+        this.time = GameController.now();
+        this.active = true;
     }
 
     private void makeToast() {
@@ -105,7 +109,38 @@ public class Agv extends Actor implements Controllable{
 
     public void update() {
         this.setVelocity(0);
-        if(isDisable) return;
+        if(!active) {
+            if(GameController.now() - this.start > Constant.DURATION * 1000) {
+                active = true;
+                int expectedTime = this.getExpectedTime();
+                int finish = (int)((GameController.now() - this.time) / 1000);
+                if(finish < expectedTime - Constant.DURATION
+                        || finish > expectedTime + Constant.DURATION) {
+                    double diff = Math.max(expectedTime - Constant.DURATION - finish,
+                            finish - expectedTime - Constant.DURATION);
+                    double lateness = Constant.getLateness(diff);
+                    this.scene.setHarmfullness(Math.max(this.scene.getHarmfullness() + lateness, 0));
+                }
+                this.desX = 50;
+                this.desY = 14;
+                this.desText.destroy();
+                this.eraseDeadline(this.scene.desTable);
+                this.desText = new Text(
+                        this.scene, //
+                        this.desX,
+                        this.desY,
+                        -5, -15,
+                        "DES_AGV",
+                        "-fx-font-family: \"Courier New\";" +
+                                "-fx-font-weight: 900;" +
+                                " -fx-fill: green;" +
+                                " -fx-stroke: black;" +
+                                " -fx-stroke-width: 1;" +
+                                " -fx-font-size: 18px");
+                isLastMoving = true;
+            }
+            return;
+        }
         if(!this.collidedActors.isEmpty()) return;
 
         boolean t = true, b = true, l = true, r = true;
@@ -174,6 +209,10 @@ public class Agv extends Actor implements Controllable{
         }
         moveY();
         setVelocity(0, 0);
+        if(Math.abs(this.getTranslateX() - this.desX*32) < 0.1 && Math.abs(this.getTranslateY() - this.desY*32) < 0.1) {
+            this.start = GameController.now();
+            this.active = false;
+        }
         if(this.scene.controller.keyA) {
             if(l) {
                 if(this.scene.physics.collision(_x, _y, 'A')) {
@@ -206,12 +245,28 @@ public class Agv extends Actor implements Controllable{
             }
         }
         moveX();
+        if(Math.abs(this.getTranslateX() - this.desX*32) < 0.1 && Math.abs(this.getTranslateY() - this.desY*32) < 0.1) {
+            if(isLastMoving) {
+                this.eliminate();
+                this.isDone = true;
+            }
+            else {
+                this.start = GameController.now();
+                this.active = false;
+            }
+        }
         this.text.setX_(this.getTranslateX());
         this.text.setY_(this.getTranslateY());
     }
 
     private ArrayList<Tile> getTilesWithin() {
         return this.pathLayer.getTilesWithinXY(this.getTranslateX(), this.getTranslateY(), 30, 30);
+    }
+
+    public void eliminate() {
+        this.text.destroy();
+        this.desText.destroy();
+        this.destroy();
     }
 
     @Override

@@ -3,6 +3,7 @@ package classes;
 import kernel.constant.Constant;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,8 +50,8 @@ public class EmergencyGraph extends Graph {
 
                 // Cần cập nhật lại
                 for(int i = 0; i < this.agents.size(); i++) {
-                    double dist = Math.sqrt((x - this.agents.get(i).x) * (x - this.agents.get(i).x) + (y - this.agents.get(i).y) * (y - this.agents.get(i).y));
-                    if(dist / this.agents.get(i).speed < Constant.DELTA_T) {
+                    double dist = Math.sqrt((x * 32 - this.agents.get(i).getTranslateX()) * (x*32 - this.agents.get(i).getTranslateX()) + (y*32 - this.agents.get(i).getTranslateY()) * (y*32 - this.agents.get(i).getTranslateY()));
+                    if(dist / /*this.agents.get(i).speed*/ 32 < Constant.DELTA_T) {
                         this.nodes[j][k].setWeight(this.nodes[j][k].getWeight() + 1);
                     }
                 }
@@ -116,6 +117,7 @@ public class EmergencyGraph extends Graph {
                 path.add(cur);
                 while (previous[cur.x][cur.y] != null) {
                     path.add(previous[cur.x][cur.y]);
+                    System.out.println("x, y: " + cur.x + ", "  +cur.y);
                     cur = previous[cur.x][cur.y];
                 }
                 Collections.reverse(path);
@@ -124,7 +126,7 @@ public class EmergencyGraph extends Graph {
             }
             openSet.remove(winner);
             closeSet.add(current);
-            ArrayList<Node2D> neighbors = new ArrayList<>(List.of(current.nodeN, current.nodeE, current.nodeS, current.nodeW,
+            ArrayList<Node2D> neighbors = new ArrayList<>(Arrays.asList(current.nodeN, current.nodeE, current.nodeS, current.nodeW,
                     current.nodeVN, current.nodeVE, current.nodeVS, current.nodeVW));
 
             for (int i = 0; i < neighbors.size(); i++) {

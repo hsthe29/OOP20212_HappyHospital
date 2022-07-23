@@ -2,6 +2,7 @@ package classes;
 
 import classes.statesOfAutoAGV.HybridState;
 import classes.statesOfAutoAGV.RunningState;
+import kernel.constant.Constant;
 import kernel.utilities.GameController;
 import javafx.geometry.Rectangle2D;
 import scenes.MainScene;
@@ -22,6 +23,7 @@ public class AutoAgv extends Actor implements Controllable{
     public double waitT;
     public int sobuocdichuyen;
     public double thoigiandichuyen;
+    public double time;
     public HybridState hybridState;
     private int endX;
     private int endY;
@@ -43,7 +45,6 @@ public class AutoAgv extends Actor implements Controllable{
         this.endY = endY * 32;
         int stX = 4, stY;
         boolean upOrDown = Math.random() > 0.5;
-        System.out.println(upOrDown);
         if(upOrDown) {
             // up
             stY = 12;
@@ -60,21 +61,25 @@ public class AutoAgv extends Actor implements Controllable{
                 this.scene, // getter
                 endX,
                 endY,
-                0, -15,
+                -1, -15,
                 "DES",
                 "-fx-font-family: \"Courier New\";" +
                         "-fx-font-weight: 900;" +
                         " -fx-fill: red;" +
                         " -fx-stroke: black;" +
-                        " -fx-stroke-width: 1.5;" +
+                        " -fx-stroke-width: 1;" +
                         " -fx-font-size: 22px");
 
         this.path = this.calPathAStar(this.curNode, this.endNode);
         this.sobuocdichuyen = 0;
         this.thoigiandichuyen = GameController.now();
+        this.time = GameController.now();
         this.estimateArrivalTime(x * 32, y * 32, endX * 32, endY * 32);
         this.hybridState = new RunningState(false);
-        if(this.path == null) this.eliminate();
+        if(this.path == null) {
+            this.eliminate();
+            return;
+        }
         if(!upOrDown) {
             this.path.add(0, this.graph.nodes[4][14]);
         }
@@ -101,6 +106,7 @@ public class AutoAgv extends Actor implements Controllable{
             scene.controller.oos.flush();
             scene.controller.oos.writeObject(new Message(4, startPos, endPos));
             ArrayList<Position> pp = ((Path) scene.controller.ois.readObject()).path;
+            if(pp == null) return null;
             for(int k = 0; k < pp.size(); k++) {
                 result.add(graph.nodes[pp.get(k).dx][pp.get(k).dy]);
             }
@@ -108,7 +114,7 @@ public class AutoAgv extends Actor implements Controllable{
             return null;
         }
         return result;
-//        return this.graph.calPathAStar(start, end);
+
     }
     /**
      * Find path to the Gate
@@ -147,7 +153,9 @@ public class AutoAgv extends Actor implements Controllable{
                         " -fx-stroke-width: 1;" +
                         " -fx-font-size: 18px"
         );
-        this.path = this.calPathAStar(this.curNode, this.endNode);
+
+//        this.path = this.calPathAStar(this.curNode, this.endNode);
+        this.findPath();
         this.cur = 0;
         this.sobuocdichuyen = 0;
         this.thoigiandichuyen = GameController.now();
@@ -158,7 +166,21 @@ public class AutoAgv extends Actor implements Controllable{
                 this.endY * 32);
     }
 
+    public void findPath() {
+        this.path = this.calPathAStar(this.curNode, this.endNode);
+        if(this.path == null) {
+            if(Constant.norm1(curNode, 47, 7) < Constant.norm1(curNode, 47, 18)) {
+                this.path = this.calPathAStar(this.curNode, this.graph.nodes[47][7]);
+            } else {
+                this.path = this.calPathAStar(this.curNode, this.graph.nodes[47][18]);
+            }
+            this.path.add(this.graph.nodes[47][this.endNode.y]);
+            this.path.add(endNode);
+        }
+    }
+
     public void eliminate() {
+        this.firstText.destroy();
         this.scene.autoAgvs.remove(this);
         this.destroy();
     }

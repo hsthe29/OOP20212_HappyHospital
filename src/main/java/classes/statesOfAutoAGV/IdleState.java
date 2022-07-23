@@ -7,11 +7,13 @@ import scenes.MainScene;
 
 public class IdleState extends HybridState {
     private double _start;
+    private double _init;
     private boolean _calculated;
 
-    public IdleState(double start) {
+    public IdleState(double start, double initTime) {
         super();
         this._start = start;
+        this._init = initTime;
         this._calculated = false;
     }
 
@@ -20,9 +22,9 @@ public class IdleState extends HybridState {
         if(GameController.now() - this._start < Constant.DURATION * 1000) {
             if(!this._calculated) {
                 this._calculated = true;
-                double finish = this._start / 1000;
+                double finish = (this._start - this._init)/1000;
                 MainScene mainScene = agv.scene;
-                var expectedTime = agv.getExpectedTime();
+                int expectedTime = agv.getExpectedTime();
                 if(finish >= expectedTime - Constant.DURATION
                         && finish <= expectedTime + Constant.DURATION){
                     return;
@@ -30,7 +32,7 @@ public class IdleState extends HybridState {
                     double diff = Math.max(expectedTime - Constant.DURATION - finish,
                             finish - expectedTime - Constant.DURATION);
                     double lateness = Constant.getLateness(diff);
-                    mainScene.setHarmfullness(mainScene.getHarmfullness() + lateness);
+                    mainScene.setHarmfullness(Math.max(mainScene.getHarmfullness() + lateness, 0));
                 }
             }
         } else {

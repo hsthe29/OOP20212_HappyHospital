@@ -34,10 +34,9 @@ public class RunningState extends HybridState{
                 mainScene.forcasting.rememberDoneAutoAgv(agv.getAgvID());
                 this._agvIsDestroyed = true;
                 agv.eliminate();
-                agv.firstText.destroy();
                 return;
             } else {
-                agv.hybridState = new IdleState(GameController.now());
+                agv.hybridState = new IdleState(GameController.now(), agv.time);
             }
             return;
         }
@@ -86,7 +85,7 @@ public class RunningState extends HybridState{
             if (agv.sobuocdichuyen % 10 == 0 || GameController.now() - agv.thoigiandichuyen > 10000) {
                 agv.thoigiandichuyen = GameController.now();
                 agv.cur = 0;
-                agv.path = agv.calPathAStar(agv.curNode, agv.endNode);
+                agv.findPath();
             }
         }
     }
