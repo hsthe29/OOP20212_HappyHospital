@@ -2,11 +2,14 @@ package scenes;
 
 import classes.*;
 import com.google.gson.Gson;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import kernel.algorithm.RandomDistribution;
 import classes.statistic.Forcasting;
 import kernel.constant.Constant;
 import kernel.constant.ModeOfDirection;
-import kernel.constant.ModeOfPathPlanning;
 import kernel.utilities.GameController;
 import tilemaps.Tile;
 import tilemaps.Tilemap;
@@ -52,7 +55,6 @@ public class MainScene extends GameScene {
     private int count = 0;
     private double _harmfulness = 0;
     private Graph spaceGraph;
-    private EmergencyGraph emergencyGraph;
     private ArrayList<ArrayList<ArrayList<Position>>> adjacencyList;
     public Forcasting forcasting;
     public HashMap<String, int[]> mapOfExits = new HashMap<>() {{
@@ -64,7 +66,8 @@ public class MainScene extends GameScene {
     private Label timeText;
     private Label harmfulTable;
     public VBox desTable;
-    private Image imgs[] = new Image[2];
+    private Image[] imgs = new Image[2];
+    private Image[] skins = new Image[3];
     public final FileChooser fileChooser = new FileChooser();
 
     public MainScene(
@@ -123,11 +126,7 @@ public class MainScene extends GameScene {
     }
 
     public Graph getGraph() {
-        if (Constant.MODE == ModeOfPathPlanning.FRANSEN) {
-            return this.spaceGraph;
-        } else {
-            return this.emergencyGraph;
-        }
+        return this.spaceGraph;
     }
 
     public double getHarmfullness() {
@@ -153,8 +152,8 @@ public class MainScene extends GameScene {
      * Chuẩn bị các tài nguyên để hiện thị giao diện trò chơi
      * */
     private void preLoad() throws IOException {
-        this.load.baseURL = "assets/";
-        this.load.baseJsonURL = "src/main/resources/assets/tilemaps/json/";
+        this.load.baseURL = "file:///" + Constant.rootPath + "assets/";
+        this.load.baseJsonURL = Constant.rootPath + "assets/tilemaps/json/";
         this.load.image("assets.json");
         this.load.tilemapTiledJSON("hospital", "hospital.json");
         this.load.image("agv", "sprites/agv.png");
@@ -175,8 +174,6 @@ public class MainScene extends GameScene {
         this.initMap();
         this.createAdjacencyList();
         this.initGraph();
-        this.spaceGraph = new Graph(52, 28, this.adjacencyList, this.pathPos);
-        this.emergencyGraph = new EmergencyGraph(52, 28, this.adjacencyList, this.pathPos);
         this.addButton();
         this.controller.oos.flush();
         this.controller.oos.writeObject(new Message(1, this.groundPos));
@@ -197,8 +194,9 @@ public class MainScene extends GameScene {
         this.agv.writeDeadline(this.desTable);
 
         this.createRandomAutoAgv();
-        this.createAgents(10, 1000);
-        controller.startGameLoop();
+        this.createAgents(10, 1500);
+
+        chooseSkin();
     }
 
     /**
@@ -268,7 +266,7 @@ public class MainScene extends GameScene {
                 "-fx-font-family: \"Comic Sans MS\"");
         this.harmfulTable.setTranslateX(50);
 
-        ImageView instructionButton = new ImageView(new Image("assets/sprites/instruction.png"));
+        ImageView instructionButton = new ImageView(new Image(this.load.baseURL + "sprites/instruction.png"));
         instructionButton.setOnMouseClicked(e -> openLinkInstruction());
         instructionButton.setTranslateX(60);
 
@@ -304,6 +302,7 @@ public class MainScene extends GameScene {
                 if(!controller.gameLoaded) {
                     try {
                         this.loadRestPart();
+                        controller.startGameLoop();
                     } catch (IOException | ClassNotFoundException ex) {
                         ex.printStackTrace();
                     }
@@ -316,11 +315,35 @@ public class MainScene extends GameScene {
         });
         pauseButton.setTranslateX(700);
         pauseButton.setTranslateY(30);
-        this.pane.getChildren().addAll(innerVbox, innerVbox2, pauseButton, txt, innerScr3);
+
+        Button rsButton = new Button("New Game");
+        rsButton.setStyle("-fx-background-color: \"#eee\";" +
+                "-fx-padding: 5 10 5 10;" +
+                "-fx-font-size: 20;" +
+                "-fx-font-weight: bold;" +
+                "-fx-fill: \"#000\";" +
+                "-fx-font-family: \"Comic Sans MS\"");
+
+        rsButton.setTranslateX(1380);
+        rsButton.setTranslateY(55);
+        rsButton.setOnAction(e -> handleClickNewGameButton());
+
+        this.pane.getChildren().addAll(innerVbox, innerVbox2, pauseButton, txt, innerScr3, rsButton);
+
+    }
+
+    public void createAGV() {
+        int r = (int) (Math.floor(Math.random() * this.pathPos.size()));
+        while (!Constant.validDestination((int) this.pathPos.get(r).x, (int) this.pathPos.get(r).y, 1, 14)) {
+            r = (int) Math.floor(Math.random() * this.pathPos.size());
+        }
+        this.agv = new Agv(this, 32, 14 * 32, this.pathPos.get(r).dx, this.pathPos.get(r).dy, this.pathLayer);
     }
 
     public void update() {
         this.getGraph().updateState();
+        if(this.agv.isDone)
+            this.createAGV();
         this.agv.stuckAGV = null;
         this.agv.update();
         for(int i = 0; i < autoAgvs.size(); ++i) {
@@ -412,6 +435,35 @@ public class MainScene extends GameScene {
             controller.startGameLoop();
     }
 
+    private void handleClickNewGameButton() {
+        if(!controller.gameLoaded) return;
+
+        boolean isRunning = controller.isGameRunning;
+        if(isRunning)
+            controller.pauseGameLoop();
+        this.agv.eliminate();
+        int n = this.autoAgvs.size();
+        for(int i = n - 1; i > -1; i--) {
+            this.autoAgvs.get(i).eliminate();
+        }
+        n = this.agents.size();
+        for(int i = n - 1; i > -1; i--) {
+            this.agents.get(i).eliminate();
+        }
+        this._harmfulness = 0;
+        this.desTable.getChildren().clear();
+        Actor._id = 0;
+        controller.restate();
+        try {
+            loadRestPart();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Couldn't load new game!");
+        }
+
+        if(isRunning)
+            controller.startGameLoop();
+    }
+
     private void openFileChooser(final FileChooser fileChooser) {
         fileChooser.setTitle("Select json file");
         fileChooser.setInitialDirectory(
@@ -439,7 +491,7 @@ public class MainScene extends GameScene {
         if(isRunning)
             controller.pauseGameLoop();
 
-        try(FileInputStream fis = new FileInputStream("src/main/resources/instruction.txt");
+        try(FileInputStream fis = new FileInputStream(Constant.rootPath + "instruction.txt");
             InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
             BufferedReader br = new BufferedReader(isr)
         ) {
@@ -461,6 +513,48 @@ public class MainScene extends GameScene {
             controller.startGameLoop();
     }
 
+    private void chooseSkin() {
+        Stage stage = new Stage();
+        VBox outterBox = new VBox();
+        HBox box = new HBox();
+        box.setPadding(new Insets(10));
+        box.setSpacing(120);
+        outterBox.setSpacing(90);
+
+        outterBox.setAlignment(Pos.CENTER);
+        box.setAlignment(Pos.CENTER);
+
+        ImageView im_1 = new ImageView(skins[0]);
+        ImageView im_2 = new ImageView(skins[1]);
+        ImageView im_3 = new ImageView(skins[2]);
+
+        im_1.setOnMouseClicked(e -> this.agv.setImage(skins[0]));
+        im_2.setOnMouseClicked(e -> this.agv.setImage(skins[1]));
+        im_3.setOnMouseClicked(e -> this.agv.setImage(skins[2]));
+
+        im_1.setScaleX(5);
+        im_1.setScaleY(5);
+        im_2.setScaleX(5);
+        im_2.setScaleY(5);
+        im_3.setScaleX(5);
+        im_3.setScaleY(5);
+
+        Button confirm = new Button("Confirm");
+        confirm.setOnAction(e -> stage.close());
+
+        box.getChildren().addAll(im_1, im_2, im_3);
+
+        outterBox.getChildren().addAll(box, confirm);
+
+        Scene scene = new Scene(outterBox, 500, 300);
+        stage.setScene(scene);
+        stage.initModality(Modality.WINDOW_MODAL);
+        stage.initOwner(this.getWindow());
+        stage.toFront();
+        stage.setTitle("Choose your AGV's skin");
+        stage.showAndWait();
+    }
+
     private void initMap() {
         this.tileSet = this.map.addTilesetImage("hospital");
         this.noPathLayer = this.map.createLayer("nopath", this.tileSet, 0, 0);
@@ -473,8 +567,11 @@ public class MainScene extends GameScene {
         this.gateLayer = this.map.createLayer("gate", this.tileSet, 0, 0);
         this.bedLayer = this.map.createLayer("bed", this.tileSet, 0, 0);
 
-        imgs[0] = new Image("assets/icons/pause.png");
-        imgs[1] = new Image("assets/icons/play.png");
+        imgs[0] = new Image(this.load.baseURL + "icons/pause.png");
+        imgs[1] = new Image(this.load.baseURL + "icons/play.png");
+        skins[0] = new Image(this.load.baseURL + "sprites/agv_violet.png");
+        skins[1] = new Image(this.load.baseURL + "sprites/agv_blue.png");
+        skins[2] = new Image(this.load.baseURL + "sprites/agv_green.png");
 
         this.groundLayer.getTiles().forEach(e -> {
             Position pos = new Position(e.x, e.y);
@@ -555,11 +652,7 @@ public class MainScene extends GameScene {
     }
 
     public void initGraph() {
-        if(Constant.MODE == ModeOfPathPlanning.FRANSEN) {
-            this.spaceGraph = new Graph(52, 28, this.adjacencyList, this.pathPos);
-        } else {
-            this.emergencyGraph = new EmergencyGraph(52, 28, this.adjacencyList, this.pathPos);
-        }
+        this.spaceGraph = new Graph(52, 28, this.adjacencyList, this.pathPos);
     }
 
     private boolean checkTilesUndirection(Tile tileA, Tile tileB) {
