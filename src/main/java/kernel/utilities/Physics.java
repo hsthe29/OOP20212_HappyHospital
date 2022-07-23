@@ -3,11 +3,9 @@ package kernel.utilities;
 import classes.*;
 import kernel.constant.Constant;
 import classes.entities.Sprite;
-import org.w3c.dom.css.Rect;
 import tilemaps.Tile;
 import javafx.geometry.Rectangle2D;
 import scenes.MainScene;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Physics {
@@ -38,8 +36,10 @@ public class Physics {
         }
 
         for(int i = 0; i < autoAgvs.size(); i++) {
+            if(autoAgvs.get(i).path == null) continue;
             Rectangle2D temp = autoAgvs.get(i).getFuture();
             for(int j = i + 1; j < autoAgvs.size(); j++) {
+                if(autoAgvs.get(j) == null) continue;
                 if(temp.intersects(autoAgvs.get(j).getFuture())) {
                     autoAgvs.get(i).collidedAGVs.add(autoAgvs.get(j));
                     autoAgvs.get(j).collidedAGVs.add(autoAgvs.get(i));
