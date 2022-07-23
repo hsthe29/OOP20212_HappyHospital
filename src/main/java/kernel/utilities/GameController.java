@@ -8,6 +8,7 @@ import javafx.beans.NamedArg;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.util.Duration;
 import scenes.MainScene;
+import socket.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -27,6 +28,7 @@ public class GameController {
     public SimpleStringProperty timeDisplay = new SimpleStringProperty("00:00:00");
     public int sec = 0;
     private static long _start;
+    private static long breakDuration = -1;
     private long agentTime;
     private long lastAgent;
 
@@ -67,9 +69,22 @@ public class GameController {
                 event -> {
                     sec++;
                     timeDisplay.set(Constant.secondsToHMS(sec));
+                    if(sec % 5 == 0) {
+                        try {
+                            if(this.scene.getHarmfullness() > 1500)
+                                oos.writeObject(new Message(5, true));
+                            else
+                                oos.writeObject(new Message(5, false));
+
+                        } catch (IOException e) {
+                            System.out.println("Error!");
+                        }
+                    }
                 });
         clock = new Timeline(clockFrame);
         clock.setCycleCount(Animation.INDEFINITE);
+        _start = System.currentTimeMillis();
+        breakDuration = System.currentTimeMillis();
     }
 
     public static GameController getInstance() {
@@ -84,21 +99,30 @@ public class GameController {
     }
 
     public void startGameLoop() {
-        _start = System.currentTimeMillis();
-        lastAgent = _start;
+        _start += System.currentTimeMillis() - breakDuration;
+        lastAgent = breakDuration;
         isGameRunning = true;
         gameLoop.play();
         clock.play();
     }
 
     public void pauseGameLoop() {
+        breakDuration = System.currentTimeMillis();
         isGameRunning = false;
         gameLoop.pause();
         clock.pause();
     }
 
+    public void restate() {
+        this.harmfulness.set("H.ness: 0");
+        this.timeDisplay.set("00:00:00");
+        this.sec = 0;
+    }
+
     public static double now() {
-        return System.currentTimeMillis() - _start;
+        if(instance.isGameRunning)
+            return System.currentTimeMillis() - _start;
+        else return breakDuration - _start;
     }
 
     public void setAgentTime(@NamedArg("ms") int time) {

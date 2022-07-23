@@ -37,6 +37,8 @@ public class Constant {
             new Rectangle2D(50 * 32, 13 * 32, 32, 64)
     };
 
+    public static String rootPath = "";
+
     public static double rng11() {
         return (Math.floor(Math.random() * 0x100000000L)) / 0x100000000L * 2;
     }
@@ -87,6 +89,10 @@ public class Constant {
             }
         }
         return count;
+    }
+
+    public static double norm1(Node2D curr, int x, int y) {
+        return (Math.abs(curr.x - x) + Math.abs(curr.y - y));
     }
 
     public static boolean isSafe(double x, double y) {

@@ -6,9 +6,11 @@ import javafx.scene.CacheHint;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import kernel.constant.Constant;
 import scenes.MainScene;
 import socket.Message;
 
+import java.io.File;
 import java.io.IOException;
 
 public class GameUI extends Application {
@@ -59,10 +61,16 @@ public class GameUI extends Application {
             gridPane.getRowConstraints().add(rc);
         }
 
-        return new MainScene(vBox, 1000, 600, true); // inject temp into MainScene's constructor
+        return new MainScene(vBox, 1000, 600, true);
     }
 
     public void run() {
+        try {
+            File directory = new File("./");
+            Constant.rootPath = directory.getCanonicalPath() + "/src/main/resources/";
+        } catch (IOException e) {
+            System.out.println("Cant find path");
+        }
         launch("launching");
     }
 }

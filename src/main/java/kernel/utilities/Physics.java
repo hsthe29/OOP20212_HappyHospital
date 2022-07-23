@@ -25,6 +25,7 @@ public class Physics {
         for(int i = 0; i < scene.agents.size(); i++) {
             Rectangle2D agentFuture = this.scene.agents.get(i).getFuture();
             for(int j = 0; j < autoAgvs.size(); j++) {
+                if(autoAgvs.get(j).path ==null) continue;
                 if(agentFuture.intersects(autoAgvs.get(j).getFuture())) {
                     scene.agents.get(i).collidedActors.add(autoAgvs.get(j));
                     autoAgvs.get(j).collidedActors.add(scene.agents.get(i));
@@ -86,7 +87,6 @@ public class Physics {
                     }
                 }
             }
-            System.out.println(free);
             if (free) agv.setVelocity(dx / d, dy / d);
         }
         agv.moveX();
@@ -130,8 +130,8 @@ public class Physics {
             moveUp &= Constant.isSafe(recU.getMinX(), recU.getMinY());
             moveDown &= Constant.isSafe(recD.getMinX(), recD.getMinY());
 
-            System.out.println("Agent id: " + agent.get_Id());
-            System.out.println(moveLeft + ", " + moveRight + ", " + moveUp + ", " + moveDown);
+//            System.out.println("Agent id: " + agent.get_Id());
+//            System.out.println(moveLeft + ", " + moveRight + ", " + moveUp + ", " + moveDown);
 
             boolean fixed = true;
             if(moveLeft) {
