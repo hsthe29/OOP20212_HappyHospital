@@ -8,7 +8,6 @@ import javafx.geometry.Rectangle2D;
 import scenes.MainScene;
 import socket.Message;
 import socket.Path;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +20,8 @@ public class AutoAgv extends Actor implements Controllable{
     public Node2D endNode;
     public int cur;
     public double waitT;
-    public int sobuocdichuyen;
-    public double thoigiandichuyen;
+    public int movingSteps;
+    public double travelTime;
     public double time;
     public HybridState hybridState;
     private int endX;
@@ -71,8 +70,8 @@ public class AutoAgv extends Actor implements Controllable{
                         " -fx-font-size: 22px");
 
         this.path = this.calPathAStar(this.curNode, this.endNode);
-        this.sobuocdichuyen = 0;
-        this.thoigiandichuyen = GameController.now();
+        this.movingSteps = 0;
+        this.travelTime = GameController.now();
         this.time = GameController.now();
         this.estimateArrivalTime(x * 32, y * 32, endX * 32, endY * 32);
         this.hybridState = new RunningState(false);
@@ -157,8 +156,8 @@ public class AutoAgv extends Actor implements Controllable{
 //        this.path = this.calPathAStar(this.curNode, this.endNode);
         this.findPath();
         this.cur = 0;
-        this.sobuocdichuyen = 0;
-        this.thoigiandichuyen = GameController.now();
+        this.movingSteps = 0;
+        this.travelTime = GameController.now();
         this.estimateArrivalTime(
                 32 * this.startX,
                 32 * this.startY,

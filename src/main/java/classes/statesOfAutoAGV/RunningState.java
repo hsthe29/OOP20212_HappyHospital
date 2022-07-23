@@ -79,11 +79,11 @@ public class RunningState extends HybridState{
             agv.setX_(agv.curNode.x * 32);
             agv.setY_(agv.curNode.y * 32);
             agv.setVelocity(0, 0);
-            agv.sobuocdichuyen++;
+            agv.movingSteps++;
 //                 cap nhat lai duong di Agv moi 10 buoc di chuyen;
 //                 hoac sau 10s di chuyen
-            if (agv.sobuocdichuyen % 10 == 0 || GameController.now() - agv.thoigiandichuyen > 10000) {
-                agv.thoigiandichuyen = GameController.now();
+            if (agv.movingSteps % 10 == 0 || GameController.now() - agv.travelTime > 10000) {
+                agv.travelTime = GameController.now();
                 agv.cur = 0;
                 agv.findPath();
             }
