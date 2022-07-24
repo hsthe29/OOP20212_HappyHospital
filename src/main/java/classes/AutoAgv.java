@@ -153,7 +153,6 @@ public class AutoAgv extends Actor implements Controllable{
                         " -fx-font-size: 18px"
         );
 
-//        this.path = this.calPathAStar(this.curNode, this.endNode);
         this.findPath();
         this.cur = 0;
         this.movingSteps = 0;
