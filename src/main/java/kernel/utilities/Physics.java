@@ -39,7 +39,7 @@ public class Physics {
             if(autoAgvs.get(i).path == null) continue;
             Rectangle2D temp = autoAgvs.get(i).getFuture();
             for(int j = i + 1; j < autoAgvs.size(); j++) {
-                if(autoAgvs.get(j) == null) continue;
+                if(autoAgvs.get(j).path == null) continue;
                 if(temp.intersects(autoAgvs.get(j).getFuture())) {
                     autoAgvs.get(i).collidedAGVs.add(autoAgvs.get(j));
                     autoAgvs.get(j).collidedAGVs.add(autoAgvs.get(i));
