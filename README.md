@@ -1,6 +1,6 @@
 # OOP20212_HappyHospital
 Project of OOP course - HUST
-
+- Score: 10/10 perfect.
 
 # HappyHospitalClient
 
